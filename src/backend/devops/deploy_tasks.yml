@@ -1,0 +1,54 @@
+
+  - name: ensure log directory
+    action: file dest={{log_dir}} state=directory
+
+  - name: ensure uwsgi_log directory
+    action: file dest={{uwsgi_log_dir}} state=directory
+
+  - name: deploy code from repository
+    git: repo={{repo_url}} dest={{src_dir}} remote={{repo_remote}} version={{repo_branch}} accept_hostkey=yes force=yes
+    notify:
+      - restart nginx
+      - restart webapp
+
+  - name: install python requirements
+    action: pip requirements={{backend_dir}}/requirements.txt state=present
+
+  - name: copy hellow_webapp.ini
+    action: template src=templates/hello_webapp.ini dest={{backend_dir}}/hello_webapp.ini
+
+  - name: create nginx site config
+    action: template src=templates/nginx_site.conf dest=/etc/nginx/sites-available/{{app_name}}.conf
+    notify:
+      - restart nginx
+
+  - name: link nginx config
+    action: file src=/etc/nginx/sites-available/{{app_name}}.conf dest=/etc/nginx/sites-enabled/{{app_name}}.conf state=link
+
+  - name: create upstart script for webapp
+    action: template src=templates/hello_webapp.conf dest=/etc/init/hello_webapp.conf
+
+  - name: Copy env.json file
+    copy: src={{env_path}} dest={{backend_dir}}/env.json
+
+  - name: Copy secret_files folder
+    copy: src=secret_files/ dest={{backend_dir}}/devops/secret_files/
+
+  - name: copy over frontend assets to public_dir
+    action: copy src={{item.from}} dest={{item.to}}
+    with_items:
+      - { from: '../../frontend/index.html', to: '{{public_dir}}' }
+      - { from: '../../frontend/main.js', to: '{{public_dir}}' }
+      - { from: '../../frontend/build/{{frontend_build_dir}}/', to: '{{public_dir}}/build/' }
+    tags:
+      quick
+
+  - name: make srv_dir writeable by webgroup
+    action: file path={{srv_dir}} mode=u=rwX,g=rwX,o=X recurse=yes group=webgroup
+
+  - name: restart server and webapp
+    command: /bin/true
+    notify:
+      - restart nginx
+      - restart webapp
+

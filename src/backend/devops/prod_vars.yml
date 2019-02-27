@@ -1,0 +1,3 @@
+repo_branch: prod
+env_path: secret_files/prod_env.json
+frontend_build_dir: ../../frontend/build/prod/

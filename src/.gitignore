@@ -1,0 +1,3 @@
+secret_files*
+backend/devops/hosts
+*env.json

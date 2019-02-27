@@ -1,0 +1,26 @@
+- hosts: staging-servers
+  become: yes
+  become_user: root
+
+  tasks:
+
+    - include_vars: vars.yml
+      tags:
+        - quick
+
+    - include_vars: staging_vars.yml
+      tags:
+        - quick
+
+    - include: deploy_tasks.yml
+      tags:
+        - quick
+
+
+  handlers:
+
+    - name: restart nginx
+      action: service name=nginx state=restarted
+
+    - name: restart webapp
+      action: service name={{app_name}} state=restarted

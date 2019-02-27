@@ -1,0 +1,3 @@
+repo_branch: staging
+env_path: secret_files/staging_env.json
+frontend_build_dir: ../../frontend/build/staging/
